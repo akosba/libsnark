@@ -343,13 +343,13 @@ void CircuitReader::mapValuesToProtoboard() {
 	for (WireMap::iterator iter = variableMap.begin();
 			iter != variableMap.end(); ++iter) {
 		Wire wireId = iter->first;
-		pb->val(*variables[variableMap[wireId]]) = wireValues[wireId];
+		pb->val(*variables[variableMap.at(wireId)]) = wireValues[wireId];
 		if (zeropMap.find(wireId) != zeropMap.end()) {
 			LinearCombination l = *zeroPwires[zeropGateIndex++];
 			if (pb->val(l) == FieldT::zero()) {
-				pb->val(*variables[zeropMap[wireId]]) = FieldT::zero();
+				pb->val(*variables[zeropMap.at(wireId)]) = FieldT::zero();
 			} else {
-				pb->val(*variables[zeropMap[wireId]]) = pb->val(l).inverse(
+				pb->val(*variables[zeropMap.at(wireId)]) = pb->val(l).inverse(
 						pb->fieldType_);
 			}
 		}
@@ -365,19 +365,19 @@ void CircuitReader::mapValuesToProtoboard() {
 void CircuitReader::find(Wire wireId, LinearCombinationPtr& lc,
 		bool intentionToEdit) {
 
-	if (!wireLinearCombinations[wireId]){
+	if (!wireLinearCombinations.at(wireId)){
 		wireLinearCombinations[wireId] = make_shared<LinearCombination>(
-				LinearCombination(*variables[variableMap[wireId]]));
+				LinearCombination(*variables.at(variableMap.at(wireId))));
 	}
-	wireUseCounters[wireId]--;
-	if (wireUseCounters[wireId] == 0) {
+	wireUseCounters.at(wireId)--;
+	if (wireUseCounters.at(wireId) == 0) {
 		toClean.push_back(wireId);
-		lc = wireLinearCombinations[wireId];
+		lc = wireLinearCombinations.at(wireId);
 	} else {
 		if (intentionToEdit) {
-			lc = make_shared<LinearCombination>(*wireLinearCombinations[wireId]);
+			lc = make_shared<LinearCombination>(*wireLinearCombinations.at(wireId));
 		} else {
-			lc = wireLinearCombinations[wireId];
+			lc = wireLinearCombinations.at(wireId);
 		}
 	}
 }
@@ -413,7 +413,7 @@ void CircuitReader::addMulConstraint(char* inputStr, char* outputStr) {
 				"Mul ..");
 		currentVariableIdx++;
 	} else {
-		pb->addRank1Constraint(*l1, *l2, *variables[variableMap[outputWireId]],
+		pb->addRank1Constraint(*l1, *l2, *variables[variableMap.at(outputWireId)],
 				"Mul ..");
 	}
 }
@@ -442,7 +442,7 @@ void CircuitReader::addXorConstraint(char* inputStr, char* outputStr) {
 		currentVariableIdx++;
 	} else {
 		pb->addRank1Constraint(2 * l1, l2,
-				l1 + l2 - *variables[variableMap[outputWireId]], "XOR ..");
+				l1 + l2 - *variables[variableMap.at(outputWireId)], "XOR ..");
 	}
 }
 
@@ -470,7 +470,7 @@ void CircuitReader::addOrConstraint(char* inputStr, char* outputStr) {
 		currentVariableIdx++;
 	} else {
 		pb->addRank1Constraint(l1, l2,
-				l1 + l2 - *variables[variableMap[outputWireId]], "OR ..");
+				l1 + l2 - *variables[variableMap.at(outputWireId)], "OR ..");
 	}
 }
 
@@ -535,7 +535,7 @@ void CircuitReader::addSplitConstraint(char* inputStr, char* outputStr,
 			vptr = variables[currentVariableIdx];
 			currentVariableIdx++;
 		} else {
-			vptr = variables[variableMap[bitWireId]];
+			vptr = variables[variableMap.at(bitWireId)];
 		}
 		pb->enforceBooleanity(*vptr);
 		sum += LinearTerm(*vptr, two_i);
@@ -602,7 +602,7 @@ void CircuitReader::addNonzeroCheckConstraint(char* inputStr, char* outputStr) {
 		vptr = variables[currentVariableIdx];
 		currentVariableIdx++;
 	} else {
-		vptr = variables[variableMap[outputWireId]];
+		vptr = variables[variableMap.at(outputWireId)];
 	}
 	variables.push_back(make_shared<Variable>("zerop aux"));
 	pb->addRank1Constraint(*l, 1 - *vptr, 0, "condition * not(output) = 0");
